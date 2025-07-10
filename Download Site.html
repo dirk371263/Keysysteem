@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="UTF-8" />
+<html lang="nl"><head>
+  <meta charset="UTF-8">
   <title>Script Key Systeem</title>
   <style>
     body {
@@ -61,31 +60,31 @@
   </style>
 </head>
 <body>
-  <div class="container" id="mainContainer" style="display:none;">
+  <div class="container" id="mainContainer" style="display: block;">
     <h2 id="claimTitle">Claim jouw Script</h2>
 
     <select id="scriptChoice">
-      <option value="0" disabled selected>Kies je script</option>
+      <option value="0" disabled="" selected="">Kies je script</option>
       <option value="1">Script 1</option>
       <option value="2">Script 2</option>
       <option value="3">Script 3</option>
     </select>
 
-    <input type="text" id="keyInput" placeholder="Voer jouw key in" />
+    <input type="text" id="keyInput" placeholder="Voer jouw key in">
     <button onclick="validateKey()" id="verifyBtn">Verifieer Key</button>
     <div class="status" id="keyStatus"></div>
 
     <button id="claimButton" style="display:none;" onclick="claimScript()">🎯 Claim Script</button>
     <div class="status" id="claimStatus"></div>
 
-    <div class="admin-section" id="adminSection">
+    <div class="admin-section" id="adminSection" style="display: block;">
       <h3 id="adminTitle">Admin: Voeg Key toe</h3>
       <select id="adminScriptSelect">
         <option value="1">Script 1</option>
         <option value="2">Script 2</option>
         <option value="3">Script 3</option>
       </select>
-      <input type="text" id="newKeyInput" placeholder="Nieuwe key" />
+      <input type="text" id="newKeyInput" placeholder="Nieuwe key">
       <button onclick="addKey()" id="addKeyBtn">Voeg toe</button>
       <div class="status" id="adminStatus"></div>
     </div>
@@ -274,5 +273,6 @@
 
     checkIfEUIP();
   </script>
-</body>
-</html>
+
+
+</body></html>
