@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Script Key Systeem</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #1e1e2f, #2a2a40);
+      font-family: 'Segoe UI', sans-serif;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background-color: #2f2f46;
+      padding: 30px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 450px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+      text-align: center;
+    }
+    select, input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4f46e5;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background-color: #6366f1;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #a3a3a3;
+      min-height: 20px;
+    }
+    .admin-section {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #444;
+      display: none;
+    }
+    .lang-switch {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="mainContainer" style="display:none;">
+    <h2 id="claimTitle">Claim jouw Script</h2>
+
+    <select id="scriptChoice">
+      <option value="0" disabled selected>Kies je script</option>
+      <option value="1">Script 1</option>
+      <option value="2">Script 2</option>
+      <option value="3">Script 3</option>
+    </select>
+
+    <input type="text" id="keyInput" placeholder="Voer jouw key in" />
+    <button onclick="validateKey()" id="verifyBtn">Verifieer Key</button>
+    <div class="status" id="keyStatus"></div>
+
+    <button id="claimButton" style="display:none;" onclick="claimScript()">🎯 Claim Script</button>
+    <div class="status" id="claimStatus"></div>
+
+    <div class="admin-section" id="adminSection">
+      <h3 id="adminTitle">Admin: Voeg Key toe</h3>
+      <select id="adminScriptSelect">
+        <option value="1">Script 1</option>
+        <option value="2">Script 2</option>
+        <option value="3">Script 3</option>
+      </select>
+      <input type="text" id="newKeyInput" placeholder="Nieuwe key" />
+      <button onclick="addKey()" id="addKeyBtn">Voeg toe</button>
+      <div class="status" id="adminStatus"></div>
+    </div>
+  </div>
+
+  <!-- 🌐 Taalwissel knop -->
+  <div class="lang-switch">
+    <button onclick="toggleLanguage()" id="langButton">🌐 English</button>
+  </div>
+
+  <script>
+    const CLAIM_LIMIT = 2;
+    const KEYS_STORAGE = "extraKeys";
+    const USED_STORAGE = "usedKeys";
+    const euCountries = [
+      "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE",
+      "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT",
+      "RO", "SK", "SI", "ES", "SE"
+    ];
+
+    let currentIP = null;
+    let validatedScriptId = null;
+    let currentLanguage = "nl";
+
+    const scripts = {
+      1: { key: "script1", text: "print('Script 1 geclaimd')" },
+      2: { key: "script2", text: "print('Script 2 geclaimd')" },
+      3: { key: "script3", text: "print('Script 3 geclaimd')" }
+    };
+
+    const translations = {
+      nl: {
+        claimTitle: "Claim jouw Script",
+        selectPlaceholder: "Kies je script",
+        keyPlaceholder: "Voer jouw key in",
+        verifyButton: "Verifieer Key",
+        claimButton: "🎯 Claim Script",
+        adminTitle: "Admin: Voeg Key toe",
+        newKeyPlaceholder: "Nieuwe key",
+        addButton: "Voeg toe",
+        langButton: "🌐 English"
+      },
+      en: {
+        claimTitle: "Claim your Script",
+        selectPlaceholder: "Choose your script",
+        keyPlaceholder: "Enter your key",
+        verifyButton: "Verify Key",
+        claimButton: "🎯 Claim Script",
+        adminTitle: "Admin: Add Key",
+        newKeyPlaceholder: "New key",
+        addButton: "Add",
+        langButton: "🌐 Nederlands"
+      }
+    };
+
+    function toggleLanguage() {
+      currentLanguage = currentLanguage === "nl" ? "en" : "nl";
+      const t = translations[currentLanguage];
+
+      document.getElementById("claimTitle").textContent = t.claimTitle;
+      document.getElementById("scriptChoice").options[0].text = t.selectPlaceholder;
+      document.getElementById("keyInput").placeholder = t.keyPlaceholder;
+      document.getElementById("verifyBtn").textContent = t.verifyButton;
+      document.getElementById("claimButton").textContent = t.claimButton;
+      document.getElementById("adminTitle").textContent = t.adminTitle;
+      document.getElementById("newKeyInput").placeholder = t.newKeyPlaceholder;
+      document.getElementById("addKeyBtn").textContent = t.addButton;
+      document.getElementById("langButton").textContent = t.langButton;
+    }
+
+    function getExtraKeys() {
+      return JSON.parse(localStorage.getItem(KEYS_STORAGE) || "[]");
+    }
+
+    function saveExtraKeys(keys) {
+      localStorage.setItem(KEYS_STORAGE, JSON.stringify(keys));
+    }
+
+    function getUsedKeys() {
+      return JSON.parse(localStorage.getItem(USED_STORAGE) || "[]");
+    }
+
+    function markKeyUsed(key) {
+      const used = getUsedKeys();
+      used.push(key);
+      localStorage.setItem(USED_STORAGE, JSON.stringify(used));
+    }
+
+    function validateKey() {
+      const selectedScript = parseInt(document.getElementById("scriptChoice").value);
+      const enteredKey = document.getElementById("keyInput").value.trim();
+      const status = document.getElementById("keyStatus");
+
+      if (!selectedScript || !enteredKey) {
+        status.textContent = "⚠️ Kies een script en voer een key in.";
+        return;
+      }
+
+      const keys = getExtraKeys();
+      const used = getUsedKeys();
+
+      const match = keys.find(k => k.key === enteredKey && k.script === selectedScript);
+
+      if (!match) {
+        status.textContent = "❌ Ongeldige of verkeerde key.";
+        return;
+      }
+
+      if (used.includes(enteredKey)) {
+        status.textContent = "⚠️ Deze key is al gebruikt.";
+        return;
+      }
+
+      validatedScriptId = selectedScript;
+      markKeyUsed(enteredKey);
+      status.textContent = "✅ Key geldig! Je kunt nu claimen.";
+      document.getElementById("claimButton").style.display = "block";
+    }
+
+    function claimScript() {
+      const claimStatus = document.getElementById("claimStatus");
+      const btnKey = `claims_${validatedScriptId}`;
+      const currentClaims = parseInt(localStorage.getItem(btnKey) || "0");
+
+      if (currentClaims >= CLAIM_LIMIT) {
+        claimStatus.textContent = "❌ Claimlimiet bereikt.";
+        return;
+      }
+
+      const scriptText = scripts[validatedScriptId].text;
+      navigator.clipboard.writeText(scriptText).then(() => {
+        localStorage.setItem(btnKey, currentClaims + 1);
+        claimStatus.textContent = `✅ Script ${validatedScriptId} gekopieerd (${currentClaims + 1}/${CLAIM_LIMIT})`;
+      });
+    }
+
+    function addKey() {
+      if (currentIP !== "95.99.38.25") {
+        document.getElementById("adminStatus").textContent = "⛔ Geen toestemming.";
+        return;
+      }
+
+      const newKey = document.getElementById("newKeyInput").value.trim();
+      const scriptId = parseInt(document.getElementById("adminScriptSelect").value);
+      const keys = getExtraKeys();
+      const status = document.getElementById("adminStatus");
+
+      if (!newKey) {
+        status.textContent = "⚠️ Voer een key in.";
+        return;
+      }
+
+      if (keys.some(k => k.key === newKey)) {
+        status.textContent = "⚠️ Key bestaat al.";
+        return;
+      }
+
+      keys.push({ key: newKey, script: scriptId });
+      saveExtraKeys(keys);
+      status.textContent = `✅ Key toegevoegd aan Script ${scriptId}`;
+      document.getElementById("newKeyInput").value = "";
+    }
+
+    function checkIfEUIP() {
+      fetch("https://ipapi.co/json/")
+        .then(res => res.json())
+        .then(data => {
+          const userCountry = data.country;
+          currentIP = data.ip;
+
+          if (!euCountries.includes(userCountry)) {
+            document.body.innerHTML = "<div style='color: white; text-align: center; padding: 50px;'>❌ Alleen toegankelijk vanuit de Europese Unie (EU).</div>";
+            return;
+          }
+
+          document.getElementById("mainContainer").style.display = "block";
+
+          if (currentIP === "95.99.38.25") {
+            document.getElementById("adminSection").style.display = "block";
+          }
+        })
+        .catch(err => {
+          document.body.innerHTML = "<div style='color: white; text-align: center; padding: 50px;'>⚠️ Fout bij IP-verificatie.</div>";
+        });
+    }
+
+    checkIfEUIP();
+  </script>
+</body>
+</html>
